@@ -21,7 +21,11 @@ import org.openmhealth.schema.domain.omh.DataPoint;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.sound.midi.Soundbank;
 import java.io.IOException;
+import java.time.OffsetDateTime;
+import java.util.Collections;
+import java.util.List;
 
 
 /**
@@ -42,7 +46,6 @@ public class ConsoleDataPointWritingServiceImpl implements DataPointWritingServi
         for (DataPoint dataPoint : dataPoints) {
             // trying to use objectMapper.writeValue(System.out) closes the output stream, so doing it this way instead
             String dataPointAsString = objectMapper.writeValueAsString(dataPoint);
-
             System.out.println(dataPointAsString);
             written++;
         }

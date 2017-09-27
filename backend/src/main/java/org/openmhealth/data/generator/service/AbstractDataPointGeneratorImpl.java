@@ -17,6 +17,7 @@
 package org.openmhealth.data.generator.service;
 
 import org.openmhealth.data.generator.domain.TimestampedValueGroup;
+import org.openmhealth.generator.user.CurrentUserCount;
 import org.openmhealth.schema.domain.omh.*;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -54,6 +55,12 @@ public abstract class AbstractDataPointGeneratorImpl<T extends Measure>
         return dataPoints;
     }
 
+    // 创建单个的dataPoint
+    @Override
+    public DataPoint<T> generateDataPoint(TimestampedValueGroup valueGroup) {
+        return newDataPoint(newMeasure(valueGroup));
+    }
+
     /**
      * @param valueGroup a group of values
      * @return a measure corresponding to the specified values
@@ -69,6 +76,7 @@ public abstract class AbstractDataPointGeneratorImpl<T extends Measure>
         TimeInterval effectiveTimeInterval = measure.getEffectiveTimeFrame().getTimeInterval();
         OffsetDateTime effectiveEndDateTime;
 
+        // 有时间间隔的测量数据
         if (effectiveTimeInterval != null) {
             if (effectiveTimeInterval.getEndDateTime() != null) {
                 effectiveEndDateTime = effectiveTimeInterval.getEndDateTime();
@@ -114,6 +122,7 @@ public abstract class AbstractDataPointGeneratorImpl<T extends Measure>
                 }
             }
         }
+        // 时间点上的测量数据
         else { // if this is a point in time measure
             effectiveEndDateTime = measure.getEffectiveTimeFrame().getDateTime();
         }
@@ -128,7 +137,7 @@ public abstract class AbstractDataPointGeneratorImpl<T extends Measure>
                 new DataPointHeader.Builder(randomUUID().toString(), measure.getSchemaId(),
                         effectiveEndDateTime.plusMinutes(1))
                         .setAcquisitionProvenance(acquisitionProvenance)
-                        .setUserId(userId)
+                        .setUserId(userId + "-" +CurrentUserCount.currentUser)
                         .build();
 
         return new DataPoint<>(header, measure);

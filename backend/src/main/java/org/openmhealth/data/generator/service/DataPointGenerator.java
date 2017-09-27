@@ -48,4 +48,11 @@ public interface DataPointGenerator<T extends Measure> {
      * @return the list of generated data points
      */
     Iterable<DataPoint<T>> generateDataPoints(Iterable<TimestampedValueGroup> valueGroups);
+
+
+    /**
+     * @param valueGroup a single value group
+     * @return a single data point
+     */
+    DataPoint<T> generateDataPoint(TimestampedValueGroup valueGroup);
 }

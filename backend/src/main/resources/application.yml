@@ -1,16 +1,24 @@
 output:
   # whether to write data points to the "console" or to a "file", defaults to "console"
-  destination: console
+  destination: classification_file
   file:
     # the file to write the data points to, defaults to "output.json"
     filename: output.json
     # true if the file should be appended to, false if it should be overwritten, defaults to true
     append: true
+    # 输出文件的根目录
+    root: /Users/dujijun/Documents/大数据相关/数据生成/data/
 
 data:
   header:
     # the user to associate the data points with, defaults to "some-user"
-    user-id: some-user
+    user-id: the-user
+
+    # 用户产生数量
+    user-count: 100
+
+    # 每个用户组内成员数
+    member-in-user-group: 20
 
     acquisition-provenance:
       # the name of the source of the data points, defaults to "generator"
@@ -18,10 +26,10 @@ data:
 
   # data is generated according to these optional default values unless overridden in the measures
   # the earliest date time of the measures to generate, defaults to January 1st, 2014 at noon UTC
-  start-date-time: 2014-01-01T12:00:00Z
+  start-date-time: 2017-01-01T12:00:00Z
 
   # the latest date time of the measures to generate, defaults to January 1st, 2015 at noon UTC
-  end-date-time: 2015-01-01T12:00:00Z
+  end-date-time: 2017-02-01T12:00:00Z
 
   # the mean duration between the effective time frames of consecutive measures, defaults to 24 hours
   # this is specified in ISO8601 duration format, see https://www.ietf.org/rfc/rfc3339.txt page 12
@@ -49,30 +57,31 @@ data:
   # see the documentation at https://github.com/openmhealth/sample-data-generator for more information
   # by default, no data is generated; uncomment and modify the following configuration as needed
 
-#  measure-generation-requests:
-#  - generator: blood-pressure
-#    trends:
-#      ? systolic-in-mmhg
-#      : start-value: 110
-#        end-value: 125
-#        minimum-value: 100
-#        maximum-value: 140
-#        standard-deviation: 3
-#      ? diastolic-in-mmhg
-#      : start-value: 70
-#        end-value: 80
-#        minimum-value: 60
-#        maximum-value: 90
-#        standard-deviation: 3
+  measure-generation-requests:
+  - generator: blood-pressure
+  #  mean-inter-point-duration: PT1m
+    trends:
+      ? systolic-in-mmhg
+      : start-value: 110
+        end-value: 125
+        minimum-value: 100
+        maximum-value: 140
+        standard-deviation: 3
+      ? diastolic-in-mmhg
+      : start-value: 70
+        end-value: 80
+        minimum-value: 60
+        maximum-value: 90
+        standard-deviation: 3
 #
-#  - generator: body-weight
-#    trends:
-#      ? weight-in-kg
-#      : start-value: 55
-#        end-value: 60
-#        minimum-value: 50
-#        maximum-value: 65
-#        standard-deviation: 0.1
+  - generator: body-weight
+    trends:
+      ? weight-in-kg
+      : start-value: 55
+        end-value: 60
+        minimum-value: 50
+        maximum-value: 65
+        standard-deviation: 0.1
 #
 #  - generator: body-height
 #    trends:
@@ -83,22 +92,22 @@ data:
 #        maximum-value: 1.755
 #        standard-deviation: 0
 #
-#  - generator: step-count
-#    mean-inter-point-duration: PT60m
-#    suppress-night-time-measures: true
-#    trends:
-#      ? duration-in-seconds
-#      : start-value: 300
-#        end-value: 150
-#        minimum-value: 10
-#        maximum-value: 1800
-#        standard-deviation: 50
-#      ? steps-per-minute
-#      : start-value: 90
-#        end-value: 90
-#        minimum-value: 30
-#        maximum-value: 125
-#        standard-deviation: 15
+  - generator: step-count
+    mean-inter-point-duration: PT60m
+    suppress-night-time-measures: true
+    trends:
+      ? duration-in-seconds
+      : start-value: 300
+        end-value: 150
+        minimum-value: 10
+        maximum-value: 1800
+        standard-deviation: 50
+      ? steps-per-minute
+      : start-value: 90
+        end-value: 90
+        minimum-value: 30
+        maximum-value: 125
+        standard-deviation: 15
 #
 #  - generator: physical-activity
 #    trends:
@@ -115,14 +124,14 @@ data:
 #        maximum-value: 20000
 #        standard-deviation: 1000
 #
-#  - generator: heart-rate
-#    trends:
-#      ? rate-in-beats-per-minute
-#      : start-value: 80
-#        end-value: 80
-#        minimum-value: 60
-#        maximum-value: 200
-#        standard-deviation: 10
+  - generator: heart-rate
+    trends:
+      ? rate-in-beats-per-minute
+      : start-value: 80
+        end-value: 80
+        minimum-value: 60
+        maximum-value: 200
+        standard-deviation: 10
 #
 #  - generator: minutes-moderate-activity
 #    trends:
@@ -133,14 +142,14 @@ data:
 #        maximum-value: 120
 #        standard-deviation: 20
 #
-#  - generator: body-fat-percentage
-#    trends:
-#      ? percentage
-#      : start-value: 30
-#        end-value: 30
-#        minimum-value: 28
-#        maximum-value: 32
-#        standard-deviation: 0.25
+  - generator: body-fat-percentage
+    trends:
+      ? percentage
+      : start-value: 30
+        end-value: 30
+        minimum-value: 28
+        maximum-value: 32
+        standard-deviation: 0.25
 #
 #  - generator: ambient-temperature
 #    trends:

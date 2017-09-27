@@ -24,10 +24,12 @@ import org.openmhealth.data.generator.domain.TimestampedValueGroup;
 import org.openmhealth.data.generator.service.DataPointGenerator;
 import org.openmhealth.data.generator.service.DataPointWritingService;
 import org.openmhealth.data.generator.service.TimestampedValueGroupGenerationService;
+import org.openmhealth.generator.user.CurrentUserCount;
 import org.openmhealth.schema.domain.omh.DataPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -64,6 +66,9 @@ public class Application {
     @Autowired
     private DataPointWritingService dataPointWritingService;
 
+    @Value("${data.header.user-count:1}")
+    private long userCount;
+
     private Map<String, DataPointGenerator<?>> dataPointGeneratorMap = new HashMap<>();
 
 
@@ -85,6 +90,8 @@ public class Application {
 
     public void run() throws Exception {
 
+        // 从默认设置中为每个请求设置StartDateTime，EndDateTime，
+        // MeanInterPointDuration，MeanInterPointDuration
         setMeasureGenerationRequestDefaults();
 
         if (!areMeasureGenerationRequestsValid()) {
@@ -93,20 +100,28 @@ public class Application {
 
         long totalWritten = 0;
 
-        for (MeasureGenerationRequest request : dataGenerationSettings.getMeasureGenerationRequests()) {
+        for(int i = 0; i < userCount; i++){
+            //增加全局用户计数器
+            CurrentUserCount.currentUser = i;
 
-            Iterable<TimestampedValueGroup> valueGroups = valueGroupGenerationService.generateValueGroups(request);
-            DataPointGenerator<?> dataPointGenerator = dataPointGeneratorMap.get(request.getGeneratorName());
+            // 遍历配置文件中的测量数据
+            for (MeasureGenerationRequest request : dataGenerationSettings.getMeasureGenerationRequests()) {
 
-            Iterable<? extends DataPoint<?>> dataPoints = dataPointGenerator.generateDataPoints(valueGroups);
+                // 按时间进度生成趋势数据
+                Iterable<TimestampedValueGroup> valueGroups = valueGroupGenerationService.generateValueGroups(request);
 
-            long written = dataPointWritingService.writeDataPoints(dataPoints);
-            totalWritten += written;
+                // 为数据封装一些信息生成数据点准备输出
+                DataPointGenerator<?> dataPointGenerator = dataPointGeneratorMap.get(request.getGeneratorName());
+                Iterable<? extends DataPoint<?>> dataPoints = dataPointGenerator.generateDataPoints(valueGroups);
 
-            log.info("The '{}' generator has written {} data point(s).", dataPointGenerator.getName(), written);
+                // 写出数据
+                long written = dataPointWritingService.writeDataPoints(dataPoints);
+                totalWritten += written;
+
+                log.info("The '{}' generator has written {} data point(s).", dataPointGenerator.getName(), written);
+            }
+            log.info("A total of {} data point(s) have been written.", totalWritten);
         }
-
-        log.info("A total of {} data point(s) have been written.", totalWritten);
     }
 
 

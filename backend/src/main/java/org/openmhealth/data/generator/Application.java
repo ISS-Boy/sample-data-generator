@@ -29,6 +29,7 @@ import org.openmhealth.schema.domain.omh.DataPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -63,6 +64,7 @@ public class Application {
     @Autowired
     private TimestampedValueGroupGenerationService valueGroupGenerationService;
 
+    @Qualifier("classfication")
     @Autowired
     private DataPointWritingService dataPointWritingService;
 
@@ -144,6 +146,10 @@ public class Application {
             if (request.isSuppressNightTimeMeasures() == null) {
                 request.setSuppressNightTimeMeasures(dataGenerationSettings.isSuppressNightTimeMeasures());
             }
+
+            if(request.isDaily() == null){
+                request.setDaily(false);
+            }
         }
     }
 
@@ -176,7 +182,7 @@ public class Application {
 
             DataPointGenerator<?> generator = dataPointGeneratorMap.get(request.getGeneratorName());
 
-            Set<String> specifiedTrendKeys = request.getTrends().keySet();
+            Set<String> specifiedTrendKeys = request.getContainers().keySet();
             Set<String> requiredTrendKeys = generator.getRequiredValueGroupKeys();
 
             if (!specifiedTrendKeys.containsAll(requiredTrendKeys)) {

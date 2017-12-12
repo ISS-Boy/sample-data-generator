@@ -4,8 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.openmhealth.generator.user.CurrentUserCount;
 import org.openmhealth.schema.domain.omh.DataPoint;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +25,7 @@ import java.nio.file.Paths;
  */
 @Service
 @Primary
+@Qualifier("classfication")
 @ConditionalOnExpression("'${output.destination}' == 'classification_file'")
 public class ClassificationFileSystemDataPointwritingServiceImpl
         implements DataPointWritingService {
@@ -52,30 +55,33 @@ public class ClassificationFileSystemDataPointwritingServiceImpl
     @Override
     public long writeDataPoints(Iterable<? extends DataPoint<?>> dataPoints) throws Exception {
 
-        long offset = 0;
+            long offset = 0;
+            if(dataPoints.iterator().hasNext()) {
+            // 获取用户组文件夹
+            DataPoint dpTmp = dataPoints.iterator().next();
 
-        // 获取用户组文件夹
-        DataPoint dpTmp = dataPoints.iterator().next();
-        String userId = dpTmp.getHeader().getUserId();
-        String measureName = dpTmp.getHeader().getBodySchemaId().getName();
+            String userId = dpTmp.getHeader().getUserId();
+            String measureName = dpTmp.getHeader().getBodySchemaId().getName();
 
-        // 检查创建根目录文件夹，用户组文件夹和用户文件夹，并返回用户文件夹path
-        String userInGroupPath = getOrCreateUserGroupDir(userId);
+            // 检查创建根目录文件夹，用户组文件夹和用户文件夹，并返回用户文件夹path
+            String userInGroupPath = getOrCreateUserGroupDir(userId);
 
-        String path = userInGroupPath + "/"
-                + measureName + "-"
-                + filename;
-        clearFile(path);
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(path, true));) {
-            for (DataPoint dataPoint : dataPoints) {
-                dataPoint.setAdditionalProperty("id", dataPoint.getHeader().getId());
-                String valueAsString = objectMapper.writeValueAsString(dataPoint);
-                bw.write(valueAsString);
-                bw.write("\n");
-                offset++;
+            String path = userInGroupPath + "/"
+                    + measureName + "-"
+                    + filename;
+            clearFile(path);
+            try (BufferedWriter bw = new BufferedWriter(new FileWriter(path, true));) {
+                for (DataPoint dataPoint : dataPoints) {
+                    dataPoint.setAdditionalProperty("id", dataPoint.getHeader().getId());
+                    String valueAsString = objectMapper.writeValueAsString(dataPoint);
+                    bw.write(valueAsString);
+                    bw.write("\n");
+                    offset++;
+                }
             }
         }
-        return offset;
+            return offset;
+
     }
 
     private String getOrCreateUserGroupDir(String userId) throws IOException {

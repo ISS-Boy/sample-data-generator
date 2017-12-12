@@ -16,19 +16,18 @@
 
 package org.openmhealth.data.generator.service;
 
-import org.apache.commons.math3.distribution.ExponentialDistribution;
-import org.openmhealth.data.generator.domain.BoundedRandomVariableTrend;
+import org.openmhealth.data.generator.domain.BoundedRandomVariableContainer;
 import org.openmhealth.data.generator.domain.MeasureGenerationRequest;
 import org.openmhealth.data.generator.domain.TimestampedValueGroup;
+import org.openmhealth.data.generator.domain.DataTrend;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
+import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import static java.time.temporal.ChronoUnit.SECONDS;
 
 
 /**
@@ -45,9 +44,9 @@ public class TimestampedValueGroupGenerationServiceImpl implements TimestampedVa
     public Iterable<TimestampedValueGroup> generateValueGroups(MeasureGenerationRequest request) {
 
         // 获取测量时间间隔，生成指数分布
-        ExponentialDistribution interPointDurationDistribution =
-                new ExponentialDistribution(request.getMeanInterPointDuration().getSeconds());
-
+//        ExponentialDistribution interPointDurationDistribution =
+//                new ExponentialDistribution(request.getMeanInterPointDuration().getSeconds());
+        Duration duration = request.getMeanInterPointDuration();
         // 获取整个时间间隔
         long totalDurationInS = Duration.between(request.getStartDateTime(), request.getEndDateTime()).getSeconds();
 
@@ -59,8 +58,8 @@ public class TimestampedValueGroupGenerationServiceImpl implements TimestampedVa
 
         do {
             // 伪造实际数据生成时间点
-            effectiveDateTime = effectiveDateTime.plus((long) interPointDurationDistribution.sample(), SECONDS);
-
+//            effectiveDateTime = effectiveDateTime.plus((long) interPointDurationDistribution.sample(), SECONDS);
+            effectiveDateTime = effectiveDateTime.plus(duration);
             // 如果到期则停止
             if (!effectiveDateTime.isBefore(request.getEndDateTime())) {
                 break;
@@ -77,20 +76,26 @@ public class TimestampedValueGroupGenerationServiceImpl implements TimestampedVa
             TimestampedValueGroup valueGroup = new TimestampedValueGroup();
             valueGroup.setTimestamp(effectiveDateTime);
 
-            // 获取此时间点在数据总时间段中的进度
-            double trendProgressFraction = (double)
-                    Duration.between(request.getStartDateTime(), effectiveDateTime).getSeconds() / totalDurationInS;
+            if (request.isDaily()) {
+                // 遍历每个container的数据
+                for (Map.Entry<String, BoundedRandomVariableContainer> containerEntry : request.getContainers().entrySet()) {
 
-            // 遍历每个trend的数据
-            for (Map.Entry<String, BoundedRandomVariableTrend> trendEntry : request.getTrends().entrySet()) {
+                    String key = containerEntry.getKey();
+                    BoundedRandomVariableContainer container = containerEntry.getValue();
 
-                // 按设定趋势通过时间进度预估生成值
-                String key = trendEntry.getKey();
-                BoundedRandomVariableTrend trend = trendEntry.getValue();
+                    // 根据当前时间生成对应的值
+                    double value = container.nextValue(interpolateForTime(container.getTrends(), effectiveDateTime));
+                    valueGroup.setValue(key, value);
+                }
+            } else {
+                request.getContainers().forEach((measures, container) -> {
+                    DataTrend rule = container.getTrends().get(0);
+                    double mean = (rule.getStartValue() + rule.getEndValue()) / 2;
+                    valueGroup.setValue(measures, container.nextValue(mean));
+                });
 
-                double value = trend.nextValue(trendProgressFraction);
-                valueGroup.setValue(key, value);
             }
+
 
             timestampedValueGroups.add(valueGroup);
         }
@@ -98,4 +103,40 @@ public class TimestampedValueGroupGenerationServiceImpl implements TimestampedVa
 
         return timestampedValueGroups;
     }
+
+    /**
+     * @param dataTrends dataTrends for a container
+     * @param time       to find a trend in dataTrends match the given time
+     * @return mean value for the given time
+     */
+    private double interpolateForTime(List<DataTrend> dataTrends, OffsetDateTime time) {
+        double current = time.get(ChronoField.MINUTE_OF_DAY) / 60d;
+        double fraction;
+        double mean = 0.0;
+
+        outer:
+        for (DataTrend trend : dataTrends) {
+            double start = trend.getStartMoment();
+            double end = trend.getEndMoment();
+            double tmp = 24d - start;// 以此为刻度
+            double length = (end + tmp) % 24;
+            // 判断时间是否在区间内
+            if (current >= 0 && (current + tmp) % 24 < length) {
+                switch (trend.getShape()) {
+                    case "linear":
+                        fraction = (current + tmp) % 24 / length;
+                        mean = trend.getStartValue() + fraction * (trend.getEndValue() - trend.getStartValue());
+                        break outer;
+                    case "steady":
+                        mean = (trend.getStartValue() + trend.getEndValue()) / 2;
+                        break;
+                }
+            }
+
+
+        }
+        return mean;
+    }
+
+
 }

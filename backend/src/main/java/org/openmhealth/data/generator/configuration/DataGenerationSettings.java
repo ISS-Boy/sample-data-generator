@@ -38,6 +38,7 @@ public class DataGenerationSettings {
     private OffsetDateTime endDateTime = OffsetDateTime.of(2015, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC);
     private Duration meanInterPointDuration = Duration.ofHours(24);
     private Boolean suppressNightTimeMeasures = false;
+    private Boolean daily = false;
     private List<MeasureGenerationRequest> measureGenerationRequests = new ArrayList<>();
 
     public OffsetDateTime getStartDateTime() {
@@ -78,5 +79,13 @@ public class DataGenerationSettings {
 
     public void setMeasureGenerationRequests(List<MeasureGenerationRequest> measureGenerationRequests) {
         this.measureGenerationRequests = measureGenerationRequests;
+    }
+
+    public Boolean isDaily() {
+        return daily;
+    }
+
+    public void setDaily(Boolean daily) {
+        this.daily = daily;
     }
 }

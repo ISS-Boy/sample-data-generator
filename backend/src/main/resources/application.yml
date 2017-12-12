@@ -7,7 +7,7 @@ output:
     # true if the file should be appended to, false if it should be overwritten, defaults to true
     append: true
     # 输出文件的根目录
-    root: /Users/dujijun/Documents/大数据相关/数据生成/data/
+    root: E:/data/data_new
 
 data:
   header:
@@ -15,7 +15,7 @@ data:
     user-id: the-user
 
     # 用户产生数量
-    user-count: 100
+    user-count: 20
 
     # 每个用户组内成员数
     member-in-user-group: 20
@@ -29,7 +29,7 @@ data:
   start-date-time: 2017-01-01T12:00:00Z
 
   # the latest date time of the measures to generate, defaults to January 1st, 2015 at noon UTC
-  end-date-time: 2017-02-01T12:00:00Z
+  end-date-time: 2017-01-10T12:00:00Z
 
   # the mean duration between the effective time frames of consecutive measures, defaults to 24 hours
   # this is specified in ISO8601 duration format, see https://www.ietf.org/rfc/rfc3339.txt page 12
@@ -39,52 +39,99 @@ data:
   # a measure is considered to occur at night if its effective time frame is after 23:00 or before 6:00
   suppress-night-time-measures: false
 
+  # true if measures want to have a cycle loop with specific trend(e.g. linear polynomial),defaults to false
+  # false means trend is steady(normal distribution of N(start+end/2,deviation))
+  daily : false
   # a list of measure generation requests, with the following structure
   #
   # - generator: body-weight             # the name of the measure generator to use, as defined by the generator
-  #   trends:                            # a map of linear trends and trend definitions
+  #   containers:                            # a map of linear containers and trend definitions
   #     ? weight-in-kg                   # a trend key, as defined by the generator
   #     : start-date-time: ...           # override for the defaults listed above
   #       end-date-time: ...
   #       mean-inter-point-duration: ...
   #       suppress-night-time-measures: ...
-  #       start-value: 55                # the value the trend starts with
-  #       end-value: 60                  # the value the trend ends with
   #       minimum-value: 50              # a lower bound on the value, default none
   #       maximum-value: 65              # an upper bound on the value, default none
   #       standard-deviation: 0.1        # the standard deviation of the value from the interpolated mean, default 0
+  #       trends:
+  #       - shape: linear                # the shape this trend looks like
+  #         start-moment: 12                  # the clock(between 0~24) the trend starts with
+  #         end-moment: 18                  # the clock the trend ends with
+  #         start-value: 60                  # the value the trend starts with
+  #         end-value: 80                  # the value the trend ends with
   #
   # see the documentation at https://github.com/openmhealth/sample-data-generator for more information
   # by default, no data is generated; uncomment and modify the following configuration as needed
 
   measure-generation-requests:
   - generator: blood-pressure
-  #  mean-inter-point-duration: PT1m
-    trends:
+    mean-inter-point-duration: PT1m
+    daily : true
+    containers:
       ? systolic-in-mmhg
-      : start-value: 110
-        end-value: 125
-        minimum-value: 100
+      : minimum-value: 100
         maximum-value: 140
         standard-deviation: 3
+        trends:
+        - shape : linear
+          start-moment: 3
+          end-moment : 9
+          start-value : 105
+          end-value: 125
+        - shape : linear
+          start-moment: 9
+          end-moment : 12
+          start-value : 125
+          end-value: 110
+        - shape : linear
+          start-moment: 12
+          end-moment : 17
+          start-value : 110
+          end-value: 125
+        - shape: linear
+          start-moment : 17
+          end-moment: 3
+          start-value : 125
+          end-value : 105
       ? diastolic-in-mmhg
-      : start-value: 70
-        end-value: 80
-        minimum-value: 60
+      : minimum-value: 60
         maximum-value: 90
         standard-deviation: 3
+        trends:
+        - shape : linear
+          start-moment: 3
+          end-moment : 9
+          start-value : 65
+          end-value: 85
+        - shape : linear
+          start-moment: 9
+          end-moment : 12
+          start-value : 85
+          end-value: 70
+        - shape : linear
+          start-moment: 12
+          end-moment : 17
+          start-value : 70
+          end-value: 80
+        - shape: linear
+          start-moment : 17
+          end-moment: 3
+          start-value : 80
+          end-value : 65
+
 #
-  - generator: body-weight
-    trends:
-      ? weight-in-kg
-      : start-value: 55
-        end-value: 60
-        minimum-value: 50
-        maximum-value: 65
-        standard-deviation: 0.1
+#  - generator: body-weight
+#    containers:
+#      ? weight-in-kg
+#      : start-value: 55
+#        end-value: 60
+#        minimum-value: 50
+#        maximum-value: 65
+#        standard-deviation: 0.1
 #
 #  - generator: body-height
-#    trends:
+#    containers:
 #      ? height-in-meters
 #      : start-value: 1.75
 #        end-value: 1.75
@@ -93,24 +140,26 @@ data:
 #        standard-deviation: 0
 #
   - generator: step-count
-    mean-inter-point-duration: PT60m
+    mean-inter-point-duration: PT30m
     suppress-night-time-measures: true
-    trends:
+    containers:
       ? duration-in-seconds
-      : start-value: 300
-        end-value: 150
-        minimum-value: 10
+      : minimum-value: 10
         maximum-value: 1800
         standard-deviation: 50
+        trends:
+        - start-value: 300
+          end-value: 1500
       ? steps-per-minute
-      : start-value: 90
-        end-value: 90
-        minimum-value: 30
+      : minimum-value: 30
         maximum-value: 125
         standard-deviation: 15
-#
+        trends:
+        - start-value: 90
+          end-value: 90
+
 #  - generator: physical-activity
-#    trends:
+#    containers:
 #      ? duration-in-seconds
 #      : start-value: 1800
 #        end-value: 1800
@@ -123,18 +172,19 @@ data:
 #        minimum-value: 500
 #        maximum-value: 20000
 #        standard-deviation: 1000
-#
+
   - generator: heart-rate
-    trends:
+    mean-inter-point-duration: PT1m
+    containers:
       ? rate-in-beats-per-minute
-      : start-value: 80
-        end-value: 80
-        minimum-value: 60
+      : minimum-value: 60
         maximum-value: 200
         standard-deviation: 10
-#
+        trends:
+        - start-value: 80
+          end-value: 130
 #  - generator: minutes-moderate-activity
-#    trends:
+#    containers:
 #      ? minutes
 #      : start-value: 30
 #        end-value: 30
@@ -143,16 +193,20 @@ data:
 #        standard-deviation: 20
 #
   - generator: body-fat-percentage
-    trends:
+    mean-inter-point-duration: PT30m
+    containers:
       ? percentage
-      : start-value: 30
-        end-value: 30
-        minimum-value: 28
+      : minimum-value: 28
         maximum-value: 32
         standard-deviation: 0.25
+        trends:
+        - start-value: 30
+          end-value: 30
+
+
 #
 #  - generator: ambient-temperature
-#    trends:
+#    containers:
 #      ? temperature-in-c
 #      : start-value: 22
 #        end-value: 22
@@ -161,7 +215,7 @@ data:
 #        standard-deviation: 1
 #
 #  - generator: blood-glucose
-#    trends:
+#    containers:
 #      ? glucose-in-mg-per-dl
 #      : start-value: 90
 #        end-value: 100
@@ -169,20 +223,22 @@ data:
 #        maximum-value: 140
 #        standard-deviation: 5
 #
-#  - generator: body-temperature
-#    trends:
-#      ? temperature-in-c
-#      : start-value: 36.8
-#        end-value: 36.8
-#        minimum-value: 36.4
-#        maximum-value: 38
-#        standard-deviation: 0.3
-#
-#  - generator: sleep-duration
-#    trends:
-#      ? duration-in-hours
-#      : start-value: 8
-#        end-value: 8
-#        minimum-value: 4
-#        maximum-value: 12
-#        standard-deviation: 0.75
+  - generator: body-temperature
+    containers:
+      ? temperature-in-c
+      : minimum-value: 36.4
+        maximum-value: 38
+        standard-deviation: 0.3
+        trends:
+        - start-value: 36.8
+          end-value: 36.8
+
+  - generator: sleep-duration
+    containers:
+      ? duration-in-hours
+      : minimum-value: 4
+        maximum-value: 12
+        standard-deviation: 0.75
+        trends:
+        - start-value: 8
+          end-value: 8

@@ -36,8 +36,8 @@ public class MeasureGenerationRequest {
     private OffsetDateTime endDateTime;
     private Duration meanInterPointDuration;
     private Boolean suppressNightTimeMeasures;
-    private Map<String, BoundedRandomVariableTrend> trends = new HashMap<>();
-
+    private Map<String, BoundedRandomVariableContainer> containers = new HashMap<>();
+    private Boolean daily;
     /**
      * @return the name of the measure generator to use
      */
@@ -108,20 +108,29 @@ public class MeasureGenerationRequest {
     }
 
     /**
-     * @return a map of trends to be generated
+     * @return a map of containers to be generated
      */
     @Valid
     @NotNull
-    public Map<String, BoundedRandomVariableTrend> getTrends() {
-        return trends;
+    public Map<String, BoundedRandomVariableContainer> getContainers() {
+        return containers;
     }
 
-    public void setTrends(Map<String, BoundedRandomVariableTrend> trends) {
-        this.trends = trends;
+    public void setContainers(Map<String, BoundedRandomVariableContainer> containers) {
+        this.containers = containers;
     }
 
-    public void addTrend(String key, BoundedRandomVariableTrend trend) {
-        this.trends.put(key, trend);
+    public void addTrend(String key, BoundedRandomVariableContainer trend) {
+        this.containers.put(key, trend);
+    }
+
+    @NotNull
+    public Boolean isDaily() {
+        return daily;
+    }
+
+    public void setDaily(Boolean daily) {
+        this.daily = daily;
     }
 
     @Override
@@ -134,7 +143,7 @@ public class MeasureGenerationRequest {
         sb.append(", endDateTime=").append(endDateTime);
         sb.append(", meanInterPointDuration=").append(meanInterPointDuration);
         sb.append(", suppressNightTimeMeasures=").append(suppressNightTimeMeasures);
-        sb.append(", trends=").append(trends);
+        sb.append(", containers=").append(containers);
         sb.append('}');
 
         return sb.toString();

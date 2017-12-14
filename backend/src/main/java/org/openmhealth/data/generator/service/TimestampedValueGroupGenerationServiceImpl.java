@@ -57,13 +57,17 @@ public class TimestampedValueGroupGenerationServiceImpl implements TimestampedVa
         List<TimestampedValueGroup> timestampedValueGroups = new ArrayList<>();
 
         do {
-            // 伪造实际数据生成时间点
-//            effectiveDateTime = effectiveDateTime.plus((long) interPointDurationDistribution.sample(), SECONDS);
-            effectiveDateTime = effectiveDateTime.plus(duration);
+            // 设置随机数据对应时间点
+            TimestampedValueGroup valueGroup = new TimestampedValueGroup();
+            valueGroup.setTimestamp(effectiveDateTime);
+
             // 如果到期则停止
             if (!effectiveDateTime.isBefore(request.getEndDateTime())) {
                 break;
             }
+
+            // 伪造实际数据生成时间点
+            effectiveDateTime = effectiveDateTime.plus(duration);
 
             // 如果夜晚不测量则跳过此时间点
             if (request.isSuppressNightTimeMeasures() != null && request.isSuppressNightTimeMeasures() &&
@@ -72,9 +76,6 @@ public class TimestampedValueGroupGenerationServiceImpl implements TimestampedVa
                 continue;
             }
 
-            // 设置随机数据对应时间点
-            TimestampedValueGroup valueGroup = new TimestampedValueGroup();
-            valueGroup.setTimestamp(effectiveDateTime);
 
             if (request.isDaily()) {
                 // 遍历每个container的数据
@@ -119,9 +120,10 @@ public class TimestampedValueGroupGenerationServiceImpl implements TimestampedVa
             double start = trend.getStartMoment();
             double end = trend.getEndMoment();
             double tmp = 24d - start;// 以此为刻度
-            double length = (end + tmp) % 24;
-            // 判断时间是否在区间内
-            if (current >= 0 && (current + tmp) % 24 < length) {
+            double length = (end + tmp) % 24d;
+            double curInRange = (current + tmp) % 24d;
+            // 判断时间是否在区间[start,end)内
+            if (curInRange >= 0 && curInRange < length) {
                 switch (trend.getShape()) {
                     case "linear":
                         fraction = (current + tmp) % 24 / length;
@@ -129,6 +131,8 @@ public class TimestampedValueGroupGenerationServiceImpl implements TimestampedVa
                         break outer;
                     case "steady":
                         mean = (trend.getStartValue() + trend.getEndValue()) / 2;
+                        break;
+                    default:
                         break;
                 }
             }

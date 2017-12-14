@@ -18,6 +18,7 @@ package org.openmhealth.data.generator.domain;
 
 import javax.validation.constraints.NotNull;
 
+import java.util.Comparator;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -36,6 +37,7 @@ public class BoundedRandomVariableContainer {
 
     private BoundedRandomVariable variable = new BoundedRandomVariable();
     private List<DataTrend> trends;
+
 
     public BoundedRandomVariableContainer() {
     }
@@ -67,11 +69,6 @@ public class BoundedRandomVariableContainer {
     }
 
     public void setTrends(List<DataTrend> trends){
-//        double sum = 0d;
-//        for (DataTrend rule : trends) {
-//            sum += (24d - rule.getStartMoment() + rule.getEndMoment()) % 24d;
-//        }
-//        if (sum != 24d) throw new RuntimeException("please input a totally 24-hour range!");
         this.trends = trends;
     }
 

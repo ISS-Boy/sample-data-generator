@@ -55,7 +55,7 @@ public class ClassificationFileSystemDataPointwritingServiceImpl
     @Override
     public long writeDataPoints(Iterable<? extends DataPoint<?>> dataPoints) throws Exception {
 
-            long offset = 0;
+            long offset = 0l;
             if(dataPoints.iterator().hasNext()) {
             // 获取用户组文件夹
             DataPoint dpTmp = dataPoints.iterator().next();
